@@ -1,0 +1,22 @@
+{
+  "name": "mock-amazon-db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "amazonItems.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kthoma2484/mock-amazon-db.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kthoma2484/mock-amazon-db/issues"
+  },
+  "homepage": "https://github.com/kthoma2484/mock-amazon-db#readme",
+  "dependencies": {
+    "inquirer": "^6.0.0"
+  }
+}
