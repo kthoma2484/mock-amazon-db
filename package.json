@@ -2,7 +2,7 @@
   "name": "mock-amazon-db",
   "version": "1.0.0",
   "description": "",
-  "main": "amazonItems.js",
+  "main": "bamazonCustomer.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/kthoma2484/mock-amazon-db#readme",
   "dependencies": {
-    "inquirer": "^6.0.0"
+    "cli": "^1.0.1",
+    "inquirer": "^6.0.0",
+    "mysql": "^2.16.0"
   }
 }
