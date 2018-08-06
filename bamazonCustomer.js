@@ -1,7 +1,9 @@
+//-------------------------------Reqired aps------------------------------------------------
+
 let inquirer = require("inquirer");
 let mysql = require("mysql");
-let cli = require("cli"),
-    options = cli.parse();
+
+//------------------------------MySQL database connection-----------------------------------
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -22,10 +24,12 @@ connection.connect(function (err) {
 
     //  console.log("connected as id " + connection.threadId);
     loadInventory();
-    // connection.end();
-
 });
 
+
+//-----------------------------------Utils---------------------------------------------------
+
+// loads full inventory list
 function loadInventory() {
     connection.query("SELECT * FROM products", function (err, res) {
         if (err) throw err;
@@ -37,7 +41,8 @@ function loadInventory() {
                 "Item ID: " + res[i].item_id + "\n\r" +
                 "Product Name: " + res[i].product_name + "\n\r" +
                 "Department: " + res[i].department_name + "\n\r" +
-                "Price: " + res[i].price + "\n\r" +
+                // code to format price value
+                "Price: " + (res[i].price).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + "\n\r" +
                 "Stock Quantity: " + res[i].stock_quantity + "\n\r" +
                 "-----------------------------------------------");
         };
@@ -46,6 +51,7 @@ function loadInventory() {
     });
 }
 
+// user interface prompt to select product and quantity
 function buyProduct() {
     inquirer
         .prompt([{
@@ -56,7 +62,7 @@ function buyProduct() {
                     if (isNaN(value) === false) {
                         return true;
                     }
-                    return false;
+                    console.log(" - Not valid. Please enter an Item ID # from the inventory available.");
                 }
             },
             {
@@ -67,8 +73,7 @@ function buyProduct() {
                     if (isNaN(value) === false) {
                         return true;
                     }
-                    return false;
-                }
+                    console.log(" - Not valid. Please enter a numerical value."); }
             },
         ])
         .then(function (answer) {
@@ -76,30 +81,56 @@ function buyProduct() {
             connection.query(query, {
                 item_id: answer.name
             }, function (err, res) {
-                // console.log(typeof answer.item_id)
-                //console.log(answer.item_id);
+          
+                if (err) throw err;
 
+                // checks if the item number provided is valid for the inventory available
+                if (answer.item_id > res.length || answer.item_id < 1 || answer.number_purchased < 1 ) {
+                    console.log("Please enter a valid inventory Item ID # and/or quantity.");
+                } 
                 // searches products database to match user item selection with database item id
-                for (let i = 0; i < res.length; i++) {
-                    let searchItemName = res[i].product_name;
-                    let searchItemQuant = res[i].stock_quantity;
-                    let searchItemId = res[i].item_id;
-                    let searchItemTotalPrice = res[i].price * answer.number_purchased;
+                else {
+                 
+                    for (let i = 0; i < res.length; i++) {
+                        let searchItemTotalPrice = 
+                        (res[i].price * answer.number_purchased).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+                        
+                        let newQuantity = 0;
 
-                    if (answer.item_id == searchItemId) {
-                        if (searchItemQuant > answer.number_purchased) {
-                        console.log(
-                            "Confirmed! You have purchased " + answer.number_purchased +
-                            searchItemName + " items!");
-                        console.log("Your total purchase cost is $" + searchItemTotalPrice + "."); 
-                        }else {
-                            console.log("Insufficient Inventory: There are not enough of these items available for the quantity you've requested.");
-                        };
+                        // if item number entered available and sufficient quantity available then item(s) purchased
+                        if (answer.item_id == res[i].item_id) {
+                            if (res[i].stock_quantity > answer.number_purchased) {
+                                console.log(
+                                    "Confirmed! You have purchased " + answer.number_purchased +
+                                    res[i].product_name + " items!");
+                                console.log("Your total purchase cost is $" + searchItemTotalPrice + ".");
+                                newQuantity += res[i].stock_quantity - answer.number_purchased;
+                                
+                                // updates mysql database with new product quantity
+                                connection.query(
+                                    "UPDATE products SET ? Where ?", [{
+                                            stock_quantity: newQuantity
+                                        },
+                                        {
+                                            item_id: res[i].item_id
+                                        }
+                                    ],
+                                    function (error) {
+                                        if (error) throw error;
+                                        console.log("Only " + newQuantity + res[i].product_name + " items left!");
+                                    }
+                                );
+                                console.log("Updating inventory....")
+
+                            } else {
+                                console.log("Insufficient Inventory: There are not enough of these items available for the quantity you've requested.");
+                            };
+                        }
+
                     }
-                
                 }
-                console.log("Updating inventory....")
-                setTimeout(loadInventory, 2000);
+                // delays inventory function by a few seconds
+                setTimeout(loadInventory, 3500);
             });
         });
 
